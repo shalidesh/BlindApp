@@ -1,7 +1,9 @@
-import 'package:bindappp/camerscreen.dart';
+import 'package:bindappp/SplashScreen.dart';
 import 'package:bindappp/home.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+
+
 
 List<CameraDescription> cameras = [];
 
@@ -16,11 +18,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return 
-    const MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "new app",
-      home: Home(),
+      home: SplashScreen(),
     );
   }
 }
+
