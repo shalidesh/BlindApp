@@ -4,6 +4,8 @@ import 'package:lottie/lottie.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:bindappp/home.dart';
 
+import 'home2.dart';
+
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -21,7 +23,7 @@ class SplashScreen extends StatelessWidget {
         //   ],
         // ),
         backgroundColor: Colors.red,
-        nextScreen: const Home(),
+        nextScreen:  SpeechScreen(),
       splashIconSize: 250,
       duration: 3000,
       splashTransition: SplashTransition.fadeTransition,
