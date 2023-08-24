@@ -39,6 +39,19 @@ class _ColorDetectorState extends State<ColorDetector> {
     }).catchError((err) {
       print('Error: $err.code\nError Message: $err.message');
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ftts.setSpeechRate(0.5); 
+      var result1 = await ftts.speak(
+          "please,double tap the screen to capture image.");
+      if (result1 == 1) {
+        // Speaking
+      } else {
+        // Not speaking
+      }
+      
+    });
+
   }
 
   @override
