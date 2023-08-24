@@ -34,6 +34,19 @@ class _SuperMarketState extends State<SuperMarket> {
   void initState() {
     super.initState();
     initCamera();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ftts.setSpeechRate(0.5); 
+      var result1 = await ftts.speak(
+          "please,left to right drag on the screen for start detection and down to up drag on the screen for stop.");
+      if (result1 == 1) {
+        // Speaking
+      } else {
+        // Not speaking
+      }
+      
+    });
+
   }
 
   Future<void> loadYoloModel() async {
@@ -85,11 +98,7 @@ class _SuperMarketState extends State<SuperMarket> {
       } else {
         // Not speaking
       }
-    }
-
-    
-    
-    
+    } 
     print(result);
   }
 }
@@ -158,51 +167,86 @@ Future<void> stopDetection() async {
       );
     }
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: CameraPreview(
-              controller,
-            ),
-          ),
-          ...displayBoxesAroundRecognizedObjects(size),
-          Positioned(
-            bottom: 75,
-            width: MediaQuery.of(context).size.width,
-            child: Container(
-              height: 80,
-              width: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    width: 5, color: Colors.white, style: BorderStyle.solid),
+      body: GestureDetector(
+
+        onHorizontalDragEnd: (details) async {
+          if ((details.primaryVelocity ?? 0) > 0) {
+            // User completed a left-to-right drag gesture
+            // Start your process 
+            var result1 = await ftts.speak(
+                "started");
+            if (result1 == 1) {
+              // Speaking
+            } else {
+              // Not speaking
+            }
+            await startDetection();
+          }
+        },
+        onVerticalDragEnd: (details) async {
+            if ((details.primaryVelocity ?? 0) < 0) {
+              // User completed a down-to-up drag gesture
+              // Start your process here
+                var result1 = await ftts.speak(
+                        "stoped");
+                    if (result1 == 1) {
+                      // Speaking
+                    } else {
+                      // Not speaking
+                    }
+             
+                stopDetection();
+                        
+              
+            }
+          },
+
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AspectRatio(
+              aspectRatio: controller.value.aspectRatio,
+              child: CameraPreview(
+                controller,
               ),
-              child: isDetecting
-                  ? IconButton(
-                      onPressed: () async {
-                        stopDetection();
-                      },
-                      icon: const Icon(
-                        Icons.stop,
-                        color: Colors.red,
-                      ),
-                      iconSize: 50,
-                    )
-                  : IconButton(
-                      onPressed: () async {
-                        await startDetection();
-                      },
-                      icon: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                      ),
-                      iconSize: 50,
-                    ),
             ),
-          ),
-        ],
+            ...displayBoxesAroundRecognizedObjects(size),
+            Positioned(
+              bottom: 75,
+              width: MediaQuery.of(context).size.width,
+              child: Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      width: 5, color: Colors.white, style: BorderStyle.solid),
+                ),
+                child: isDetecting
+                    ? IconButton(
+                        onPressed: () async {
+                          stopDetection();
+                        },
+                        icon: const Icon(
+                          Icons.stop,
+                          color: Colors.red,
+                        ),
+                        iconSize: 50,
+                      )
+                    : IconButton(
+                        onPressed: () async {
+                          await startDetection();
+                        },
+                        icon: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                        ),
+                        iconSize: 50,
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

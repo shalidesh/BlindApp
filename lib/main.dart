@@ -1,7 +1,9 @@
-import 'package:bindappp/SplashScreen.dart';
+import 'package:bindappp/OtherScreens(Testing)/SplashScreen.dart';
 import 'package:bindappp/home.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+
+import 'SplashScreenUpdate.dart';
 
 
 
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "new app",
-      home: SplashScreen(),
+      home: LandingPage(),
     );
   }
 }

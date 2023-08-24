@@ -10,6 +10,9 @@ import 'dart:async';
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:highlight_text/highlight_text.dart';
 
 class Navigation extends StatefulWidget {
   @override
@@ -33,6 +36,24 @@ class _NavigationState extends State<Navigation> {
   double CONFIDENCE_THRESHOLD = 0.4;
   double NMS_THRESHOLD = 0.3;
 
+  // late stt.SpeechToText _speech;
+  // bool _isListening = false;
+  
+  // final Map<String, HighlightedWord> _highlights = {
+  //   'flutter': HighlightedWord(
+  //     onTap: () => print('flutter'),
+  //     textStyle: const TextStyle(
+  //       color: Colors.blue,
+  //       fontWeight: FontWeight.bold,
+  //     ),
+  //   ),
+  // };
+
+  // String _text = 'Press the button and start speaking';
+  // double _confidence = 1.0;
+  // String instruction_text="";
+
+
   //  Distance constants 
   double KNOWN_DISTANCE = 62; //INCHES
   double CHAIR_WIDTH = 21; //INCHES
@@ -55,6 +76,18 @@ class _NavigationState extends State<Navigation> {
           isSpeaking = false;
         });
       });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ftts.setSpeechRate(0.5); 
+      var result1 = await ftts.speak(
+          "please,left to right drag on the screen for start navigation and down to up drag on the screen for stop.");
+      if (result1 == 1) {
+        // Speaking
+      } else {
+        // Not speaking
+      }
+      
+    });
 
   }
 
@@ -122,13 +155,16 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
 
       // Wait for the previous text-to-speech to finish
       while (isSpeaking) {
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(Duration(milliseconds: 500));
       }
 
       if (object["tag"]== 'chair'){
         
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (object["box"][2] - object["box"][0]));
-        distance_text='there is Chair withing ${distance.toStringAsFixed(0)}  inches';
+
+        if(distance>200){
+
+           distance_text='Chair  ${distance.toStringAsFixed(1)}  inches';
         var result1 = await ftts.speak(distance_text);
         if (result1 == 1) {
           // Speaking
@@ -138,11 +174,17 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
         } else {
           // Not speaking
         }
+
+        }
+       
       }
-        else if(object["tag"]== 'Sofa'){
+        else if(object["tag"]== 'cabinet'){
         
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (object["box"][2] - object["box"][0]));
-        distance_text='there is Sofa withing ${distance.toStringAsFixed(0)}  inches';
+
+        if(distance>200){
+          distance_text='cabinet ${distance.toStringAsFixed(1)}  inches';
+
         var result1 = await ftts.speak(distance_text);
         if (result1 == 1) {
           // Speaking
@@ -152,10 +194,16 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
         } else {
           // Not speaking
         }
+
+        }
+        
       }
       else{
         distance = distanceFinder(focal_table, TABLE_WIDTH,(object["box"][2] - object["box"][0]));
-        distance_text='there is Table withing ${distance.toStringAsFixed(0)}  inches';
+
+        if(distance>200){
+
+           distance_text=' Table ${distance.toStringAsFixed(1)}  inches';
         var result1 = await ftts.speak(distance_text);
         if (result1 == 1) {
             setState(() {
@@ -165,6 +213,9 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
         } else {
           // Not speaking
         }
+
+        }
+       
       }
     }
    
@@ -208,7 +259,7 @@ Future<void> stopDetection() async {
         
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
       }
-      else if (result["tag"]== 'Sofa') {
+      else if (result["tag"]== 'cabinet') {
         // code to execute if condition2 is true
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
         
@@ -254,51 +305,84 @@ Future<void> stopDetection() async {
       );
     }
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: CameraPreview(
-              controller,
-            ),
-          ),
-          ...displayBoxesAroundRecognizedObjects(size),
-          Positioned(
-            bottom: 75,
-            width: MediaQuery.of(context).size.width,
-            child: Container(
-              height: 80,
-              width: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    width: 5, color: Colors.white, style: BorderStyle.solid),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) async {
+          if ((details.primaryVelocity ?? 0) > 0) {
+            // User completed a left-to-right drag gesture
+            // Start your process 
+            var result1 = await ftts.speak(
+                "started");
+            if (result1 == 1) {
+              // Speaking
+            } else {
+              // Not speaking
+            }
+            await startDetection();
+          }
+        },
+        onVerticalDragEnd: (details) async {
+            if ((details.primaryVelocity ?? 0) < 0) {
+              // User completed a down-to-up drag gesture
+              // Start your process here
+                var result1 = await ftts.speak(
+                        "stoped");
+                    if (result1 == 1) {
+                      // Speaking
+                    } else {
+                      // Not speaking
+                    }
+             
+                stopDetection();
+                        
+              
+            }
+          },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AspectRatio(
+              aspectRatio: controller.value.aspectRatio,
+              child: CameraPreview(
+                controller,
               ),
-              child: isDetecting
-                  ? IconButton(
-                      onPressed: () async {
-                        stopDetection();
-                      },
-                      icon: const Icon(
-                        Icons.stop,
-                        color: Colors.red,
-                      ),
-                      iconSize: 50,
-                    )
-                  : IconButton(
-                      onPressed: () async {
-                        await startDetection();
-                      },
-                      icon: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                      ),
-                      iconSize: 50,
-                    ),
             ),
-          ),
-        ],
+            ...displayBoxesAroundRecognizedObjects(size),
+            Positioned(
+              bottom: 75,
+              width: MediaQuery.of(context).size.width,
+              child: Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      width: 5, color: Colors.white, style: BorderStyle.solid),
+                ),
+                child: isDetecting
+                    ? IconButton(
+                        onPressed: () async {
+                          stopDetection();
+                        },
+                        icon: const Icon(
+                          Icons.stop,
+                          color: Colors.red,
+                        ),
+                        iconSize: 50,
+                      )
+                    : IconButton(
+                        onPressed: () async {
+                          await startDetection();
+                        },
+                        icon: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                        ),
+                        iconSize: 50,
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

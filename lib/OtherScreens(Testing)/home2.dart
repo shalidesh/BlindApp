@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:highlight_text/highlight_text.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-import 'ColorDetector.dart';
-import 'Navigation.dart';
-import 'SuperMarkets.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+import '../ColorDetector.dart';
+import '../Navigation.dart';
+import '../SuperMarkets.dart';
 
 
 class SpeechScreen extends StatefulWidget {
@@ -28,11 +30,23 @@ class _SpeechScreenState extends State<SpeechScreen> {
   bool _isListening = false;
   String _text = 'Press the button and start speaking';
   double _confidence = 1.0;
+  FlutterTts ftts = FlutterTts();
+  String instruction_text="";
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      instruction_text="hi,i am Alexa.Here are the brief instructions for using the app.Double tap the screen and say “navigation” to access the indoor navigation function.Double tap the screen and say “super market” to access the super market object detection function.Double tap the screen and say “detection” to access the dress colour detection and recommendation function.";
+      var result1 = await ftts.speak(instruction_text);
+      if (result1 == 1) {
+        // Speaking
+      } else {
+        // Not speaking
+      }
+    });
   }
 
   @override
