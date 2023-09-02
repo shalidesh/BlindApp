@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'Dashboard.dart';
+
 class ColorDetector extends StatefulWidget {
   @override
   _ColorDetectorState createState() => _ColorDetectorState();
@@ -43,7 +45,7 @@ class _ColorDetectorState extends State<ColorDetector> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ftts.setSpeechRate(0.5); 
       var result1 = await ftts.speak(
-          "please,double tap the screen to capture image.");
+          "please,double tap the screen to capture image.drag screen from right to left for main menu ");
       if (result1 == 1) {
         // Speaking
       } else {
@@ -123,7 +125,16 @@ class _ColorDetectorState extends State<ColorDetector> {
     if (_controller == null || !_controller.value.isInitialized) {
       return Container();
     }
+
     return GestureDetector(
+       onHorizontalDragUpdate: (details) {
+          if (details.delta.dx < 0) {
+            Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>const DashBoard()),
+                    );
+          }
+        },
       onTap: onCameraViewTapped,
       child: AspectRatio(
         aspectRatio: _controller.value.aspectRatio,
