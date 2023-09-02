@@ -10,6 +10,8 @@ import 'dart:async';
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'Dashboard.dart';
+
 
 class SuperMarket extends StatefulWidget {
   @override
@@ -51,8 +53,8 @@ class _SuperMarketState extends State<SuperMarket> {
 
   Future<void> loadYoloModel() async {
     await vision.loadYoloModel(
-        labels: 'assets/supermarket.txt',
-        modelPath: 'assets/supermarket.tflite',
+        labels: 'assets/supermarket/supermarket_2.txt',
+        modelPath: 'assets/supermarket/supermarket_2.tflite',
         modelVersion: "yolov5",
         numThreads: 2,
         useGpu: false);
@@ -92,12 +94,18 @@ class _SuperMarketState extends State<SuperMarket> {
     });
 
     for (var object in yoloResults) {
-      var result1 = await ftts.speak(object['tag']);
-      if (result1 == 1) {
-        // Speaking
-      } else {
-        // Not speaking
+
+      if(object['box'][4] * 100>20 ){
+
+        var result1 = await ftts.speak(object['tag']);
+        if (result1 == 1) {
+          // Speaking
+        } else {
+          // Not speaking
+        }
+
       }
+     
     } 
     print(result);
   }
@@ -126,35 +134,42 @@ Future<void> stopDetection() async {
 }
 
     List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
-    if (yoloResults.isEmpty) return [];
-    double factorX = screen.width / (cameraImage?.height ?? 1);
-    double factorY = screen.height / (cameraImage?.width ?? 1);
+      if (yoloResults.isEmpty) return [];
+      double factorX = screen.width / (cameraImage?.height ?? 1);
+      double factorY = screen.height / (cameraImage?.width ?? 1);
 
-    Color colorPick = const Color.fromARGB(255, 50, 233, 30);
+      Color colorPick = const Color.fromARGB(255, 50, 233, 30);
 
-    return yoloResults.map((result) {
-      return Positioned(
-        left: result["box"][0] * factorX,
-        top: result["box"][1] * factorY,
-        width: (result["box"][2] - result["box"][0]) * factorX,
-        height: (result["box"][3] - result["box"][1]) * factorY,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(10.0)),
-            border: Border.all(color: Colors.pink, width: 2.0),
-          ),
-          child: Text(
-            "${result['tag']} ${(result['box'][4] * 100).toStringAsFixed(0)}%",
-            style: TextStyle(
-              background: Paint()..color = colorPick,
-              color: Colors.white,
-              fontSize: 18.0,
+      return yoloResults.map((result) {
+
+        // Check if the tag is "table" or "chair"
+        if ( result['box'][4] * 100>20) {
+          return Positioned(
+            left: result["box"][0] * factorX,
+            top: result["box"][1] * factorY,
+            width: (result["box"][2] - result["box"][0]) * factorX,
+            height: (result["box"][3] - result["box"][1]) * factorY,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(10.0)),
+                border: Border.all(color: Colors.pink, width: 2.0),
+              ),
+              child: Text(
+                "${result['tag']} ${result['box'][4] * 100}",
+                style: TextStyle(
+                  background: Paint()..color = colorPick,
+                  color: Colors.white,
+                  fontSize: 18.0,
+                ),
+              ),
             ),
-          ),
-        ),
-      );
-    }).toList();
-  }
+          );
+        } else {
+          // Return an empty container for other tags
+          return Container();
+        }
+  }).toList();
+}
 
     @override
   Widget build(BuildContext context) {
@@ -181,6 +196,14 @@ Future<void> stopDetection() async {
               // Not speaking
             }
             await startDetection();
+          }
+        },
+         onHorizontalDragUpdate: (details) {
+          if (details.delta.dx < 0) {
+            Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>const DashBoard()),
+                    );
           }
         },
         onVerticalDragEnd: (details) async {

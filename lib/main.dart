@@ -1,5 +1,5 @@
 import 'package:bindappp/OtherScreens(Testing)/SplashScreen.dart';
-import 'package:bindappp/home.dart';
+import 'package:bindappp/OtherScreens(Testing)/home.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 

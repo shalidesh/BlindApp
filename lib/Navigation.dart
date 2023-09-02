@@ -13,6 +13,11 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:highlight_text/highlight_text.dart';
+import 'dart:isolate';
+import 'dart:collection';
+
+import 'Dashboard.dart';
+
 
 class Navigation extends StatefulWidget {
   @override
@@ -36,36 +41,52 @@ class _NavigationState extends State<Navigation> {
   double CONFIDENCE_THRESHOLD = 0.4;
   double NMS_THRESHOLD = 0.3;
 
-  // late stt.SpeechToText _speech;
-  // bool _isListening = false;
-  
-  // final Map<String, HighlightedWord> _highlights = {
-  //   'flutter': HighlightedWord(
-  //     onTap: () => print('flutter'),
-  //     textStyle: const TextStyle(
-  //       color: Colors.blue,
-  //       fontWeight: FontWeight.bold,
-  //     ),
-  //   ),
-  // };
-
-  // String _text = 'Press the button and start speaking';
-  // double _confidence = 1.0;
-  // String instruction_text="";
-
-
   //  Distance constants 
   double KNOWN_DISTANCE = 62; //INCHES
+
   double CHAIR_WIDTH = 21; //INCHES
   double TABLE_WIDTH = 33; //INCHES
+  double CABINET_DOOR_WIDTH = 15; //INCHES
+  double DOOR_WIDTH = 25; //INCHES
+  double REFREGERATOR_DOOR_WIDTH = 21; //INCHES
+  double WINDOW_WIDTH = 33; //INCHES
+  double CABINET_WIDTH = 15; //INCHES
+  double COUCH_WIDTH = 33; //INCHES
+  double OPEN_DOOR_WIDTH =25; //INCHES
+  double POLE_WIDTH = 21; //INCHES
+  double SOFA_WIDTH = 50; //INCHES
+
+
 
   double chair_width_in_rf = 240.9855;
   double table_width_in_rf = 378.41183;
+  double cabinet_door_width_in_rf = 200.000;
+  double door_width_in_rf = 250.0000;
+  double refrigerator_door_width= 240.9855;
+  double window_width_in_rf = 378.41183;
+  double cabinet_width= 200.9855;
+  double couch_width_in_rf = 378.41183;
+  double opendoor_width_in_rf = 250.3654;
+  double pole_width= 240.9855;
+  double sofa_width_in_rf = 525.41183;
 
   double focal_chair=0.0;
   double focal_table=0.0;
+  double focal_cabinetdoor=0.0;
+  double focal_door=0.0;
+  double focal_refregator=0.0;
+  double focal_window=0.0;
+  double focal_cabinet=0.0;
+  double focal_couch=0.0;
+  double focal_opendoor=0.0;
+  double focal_pole=0.0;
+  double focal_sofa=0.0;
+
   double distance=0.0;
   String distance_text='';
+
+  // Create a queue to store the names of detected objects
+  final Queue<String> objectQueue = Queue<String>();
 
   @override
   void initState() {
@@ -80,7 +101,7 @@ class _NavigationState extends State<Navigation> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ftts.setSpeechRate(0.5); 
       var result1 = await ftts.speak(
-          "please,left to right drag on the screen for start navigation and down to up drag on the screen for stop.");
+          "please,left to right drag on the screen for start navigation and down to up drag on the screen for stop.right to left drag for main menu");
       if (result1 == 1) {
         // Speaking
       } else {
@@ -103,8 +124,8 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
 
   Future<void> loadYoloModel() async {
     await vision.loadYoloModel(
-        labels: 'assets/navigation_2.txt',
-        modelPath: 'assets/navigation_2.tflite',
+        labels: 'assets/navigation/navigation_3.txt',
+        modelPath: 'assets/navigation/navigation_3.tflite',
         modelVersion: "yolov5",
         numThreads: 2,
         useGpu: false);
@@ -158,63 +179,138 @@ double distanceFinder(double focalLength, double realObjectWidth, double widthIn
         await Future.delayed(Duration(milliseconds: 500));
       }
 
-      if (object["tag"]== 'chair'){
+      if (object["tag"]== 'chair'  && object['box'][4] * 100>80){
         
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (object["box"][2] - object["box"][0]));
 
-        if(distance>200){
+        if(distance<150){
 
-           distance_text='Chair  ${distance.toStringAsFixed(1)}  inches';
-        var result1 = await ftts.speak(distance_text);
-        if (result1 == 1) {
-          // Speaking
-          setState(() {
-            isSpeaking = true;
-          });
-        } else {
-          // Not speaking
-        }
+          //  distance_text='Chair in ${distance.toStringAsFixed(0)} inches';
+          distance_text='chair too close';
+
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
+            setState(() {
+              isSpeaking = true;
+            });
+          } else {
+            // Not speaking
+          }
 
         }
        
       }
-        else if(object["tag"]== 'cabinet'){
+        else if(object["tag"]== 'cabinetDoor'  && object['box'][4] * 100>80 ){
         
         distance = distanceFinder(focal_chair, CHAIR_WIDTH, (object["box"][2] - object["box"][0]));
 
-        if(distance>200){
-          distance_text='cabinet ${distance.toStringAsFixed(1)}  inches';
+        if(distance<150){
+          // distance_text='cabinet door in ${distance.toStringAsFixed(0)} inches';
+          distance_text='cabinet door too close';
+          //objectQueue.add('cabinet door');
 
-        var result1 = await ftts.speak(distance_text);
-        if (result1 == 1) {
-          // Speaking
-          setState(() {
-            isSpeaking = true;
-          });
-        } else {
-          // Not speaking
-        }
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
+            setState(() {
+              isSpeaking = true;
+            });
+          } else {
+            // Not speaking
+          }
 
         }
         
       }
-      else{
+      else if(object["tag"]== 'table'  && object['box'][4] * 100>80){
         distance = distanceFinder(focal_table, TABLE_WIDTH,(object["box"][2] - object["box"][0]));
 
-        if(distance>200){
+        if(distance<150){
 
-           distance_text=' Table ${distance.toStringAsFixed(1)}  inches';
-        var result1 = await ftts.speak(distance_text);
-        if (result1 == 1) {
+          //  distance_text=' Table ${distance.toStringAsFixed(1)}  inches';
+          // distance_text=' Table in ${distance.toStringAsFixed(0)} inches';
+          distance_text='table too close';
+          //objectQueue.add('table');
+
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
             setState(() {
               isSpeaking = true;
             });
-          // Speaking
-        } else {
-          // Not speaking
-        }
+          } else {
+            // Not speaking
+          }
 
         }
+       
+      }
+       else if(object["tag"]== 'window'  && object['box'][4] * 100>80){
+        distance = distanceFinder(focal_table, TABLE_WIDTH,(object["box"][2] - object["box"][0]));
+
+        if(distance<150){
+
+          //  distance_text=' Table ${distance.toStringAsFixed(1)}  inches';
+          // distance_text='window in ${distance.toStringAsFixed(0)} inches';
+          distance_text='window too close';
+          //objectQueue.add('window');
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
+            setState(() {
+              isSpeaking = true;
+            });
+          } else {
+            // Not speaking
+          }
+
+        }
+      }
+      else if(object["tag"]== 'door'  && object['box'][4] * 100>80){
+        distance = distanceFinder(focal_table, TABLE_WIDTH,(object["box"][2] - object["box"][0]));
+
+        if(distance<150){
+          // distance_text='door in ${distance.toStringAsFixed(0)} inches';
+          distance_text='door too close';
+          //objectQueue.add('door');
+    
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
+            setState(() {
+              isSpeaking = true;
+            });
+          } else {
+            // Not speaking
+          }
+
+        }
+        
+       
+      }
+
+      else if(object["tag"]== 'refrigeratorDoor'  && object['box'][4] * 100>80){
+        distance = distanceFinder(focal_table, TABLE_WIDTH,(object["box"][2] - object["box"][0]));
+
+        if(distance<150){
+
+          // distance_text='refrigerator in ${distance.toStringAsFixed(0)} inches';
+          distance_text='refrigerator too close';
+          //objectQueue.add('refrigerator');
+    
+          var result1 = await ftts.speak(distance_text);
+          if (result1 == 1) {
+            // Speaking
+            setState(() {
+              isSpeaking = true;
+            });
+          } else {
+            // Not speaking
+          }
+
+        }
+        
        
       }
     }
@@ -245,32 +341,34 @@ Future<void> stopDetection() async {
   });
 }
 
-    List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
-    if (yoloResults.isEmpty) return [];
-    double factorX = screen.width / (cameraImage?.height ?? 1);
-    double factorY = screen.height / (cameraImage?.width ?? 1);
+  List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
+  if (yoloResults.isEmpty) return [];
+  double factorX = screen.width / (cameraImage?.height ?? 1);
+  double factorY = screen.height / (cameraImage?.width ?? 1);
 
-    Color colorPick = const Color.fromARGB(255, 50, 233, 30);
+  Color colorPick = const Color.fromARGB(255, 50, 233, 30);
 
-    // [{box: [102.73690795898438, 3.2826080322265625, 153.16390991210938, 58.30506896972656, 0.9976664781570435], tag: cat}]
+  return yoloResults.map((result) {
+    if (result["tag"] == 'chair') {
+      distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
+    } else if (result["tag"] == 'cabinet') {
+      distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
+    } else if (result["tag"] == 'table') {
+      distance = distanceFinder(focal_table, TABLE_WIDTH, (result["box"][2] - result["box"][0]));
+    }
+    else{
+      distance = distanceFinder(focal_table, TABLE_WIDTH, (result["box"][2] - result["box"][0]));
+    }
+    print('distance is $distance inches');
 
-    return yoloResults.map((result) {
-      if (result["tag"]== 'chair'){
-        
-        distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
-      }
-      else if (result["tag"]== 'cabinet') {
-        // code to execute if condition2 is true
-        distance = distanceFinder(focal_chair, CHAIR_WIDTH, (result["box"][2] - result["box"][0]));
-        
-      }
-      else{
-
-        distance = distanceFinder(focal_table, TABLE_WIDTH,(result["box"][2] - result["box"][0]));
-
-      }
-      print('distance is $distance inches');
-
+    // Check if the tag is "table" or "chair"
+    if (result["tag"] == 'table'  && result['box'][4] * 100>80 ||
+     result["tag"] == 'chair' && result['box'][4] * 100>80   || 
+     result["tag"]== 'cabinet door' && result['box'][4] * 100>80 || 
+     result["tag"] == 'window'  && result['box'][4] * 100>80 || 
+     result["tag"] == 'door'  && result['box'][4] * 100>80 ||
+     result["tag"] == 'refrigeratorDoor'  && result['box'][4] * 100>80) {
+      
       return Positioned(
         left: result["box"][0] * factorX,
         top: result["box"][1] * factorY,
@@ -291,8 +389,13 @@ Future<void> stopDetection() async {
           ),
         ),
       );
-    }).toList();
-  }
+    } else {
+      // Return an empty container for other tags
+      return Container();
+    }
+  }).toList();
+}
+
 
     @override
   Widget build(BuildContext context) {
@@ -318,6 +421,14 @@ Future<void> stopDetection() async {
               // Not speaking
             }
             await startDetection();
+          }
+        },
+        onHorizontalDragUpdate: (details) {
+          if (details.delta.dx < 0) {
+            Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>const DashBoard()),
+                    );
           }
         },
         onVerticalDragEnd: (details) async {
